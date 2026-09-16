@@ -27,13 +27,28 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# 이 아래에 기존 봇 이벤트/명령어 코드가 이어집니다.
-# 기존에 작성하셨던 봇 명령어들 (예시)
+# 3. 봇 이벤트 및 명령어 설정
+@bot.event
+async def on_ready():
+    print(f"성공적으로 로그인했습니다: {bot.user}")
+
+# '안녕' 또는 '!안녕' 입력 시 반응
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    if message.content in ["안녕", "안녕하세요", "!안녕"]:
+        await message.channel.send("안녕하세요! 봇이 정상 작동 중입니다. 🎮")
+
+    await bot.process_commands(message)
+
+# !ping 명령어
 @bot.command()
 async def ping(ctx):
-    await ctx.send("pong")
+    await ctx.send("pong!")
 
-# 3. Render 환경변수에서 토큰을 불러와 봇 실행
+# 4. Render 환경변수에서 토큰을 불러와 봇 실행
 token = os.environ.get("DISCORD_TOKEN")
 if token:
     bot.run(token)
