@@ -104,3 +104,21 @@ async def 다나와(ctx, *, keyword: str = None):
 TOKEN = os.environ.get("DISCORD_TOKEN")
 if TOKEN:
     bot.run(TOKEN)
+import os
+import sys
+
+# 디스코드 토큰 환경변수 확인
+TOKEN = os.environ.get("DISCORD_TOKEN")
+
+if not TOKEN:
+    print("❌ [오류] Render Environment에 DISCORD_TOKEN이 설정되지 않았습니다.", flush=True)
+    print("👉 Render 대시보드 -> Environment 탭에서 DISCORD_TOKEN을 등록해 주세요.", flush=True)
+    sys.exit(1)
+
+print("🔑 토큰 확인 완료. 디스코드 연결을 시도합니다...", flush=True)
+
+try:
+    bot.run(TOKEN)
+except Exception as e:
+    print(f"❌ [실행 오류] 봇을 실행하는 동안 문제가 발생했습니다: {e}", flush=True)
+    sys.exit(1)
