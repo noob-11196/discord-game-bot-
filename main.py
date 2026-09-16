@@ -28,3 +28,14 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 이 아래에 기존 봇 이벤트/명령어 코드가 이어집니다.
+# 기존에 작성하셨던 봇 명령어들 (예시)
+@bot.command()
+async def ping(ctx):
+    await ctx.send("pong")
+
+# 3. Render 환경변수에서 토큰을 불러와 봇 실행
+token = os.environ.get("DISCORD_TOKEN")
+if token:
+    bot.run(token)
+else:
+    print("DISCORD_TOKEN 환경변수가 설정되지 않았습니다.")
