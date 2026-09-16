@@ -15,7 +15,8 @@ async def on_ready():
 async def 안녕(ctx):
     await ctx.send('반가워요!')
 
-TOKEN = "MTU0OTY2NjU2MTkzMjAwMTM2MQ.Gtmuke.DfGx_80DyMT..."
+# 아래 큰따옴표("") 안에 복사한 봇 토큰을 넣으세요.
+TOKEN = "MTU0OTY2NjU2MTkzMjAwMTM2MQ.GQlLoG.CzJfAEC4Q4xFDfnycoTuFxnNP9exV7moav-zzE"
 
 if __name__ == "__main__":
     bot.run(TOKEN)
