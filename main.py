@@ -1,10 +1,13 @@
 import os
 import threading
+import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import requests
+from bs4 import BeautifulSoup
 import discord
 from discord.ext import commands
 
-# Render의 포트 타임아웃 방지용 가짜 웹서버
+# 1. Render 포트 타임아웃 방지용 가짜 웹서버
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -16,10 +19,9 @@ def run_health_server():
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
     server.serve_forever()
 
-# 백그라운드로 웹서버 실행
 threading.Thread(target=run_health_server, daemon=True).start()
 
-# --- 디스코드 봇 메인 코드 ---
+# 2. 디스코드 봇 기본 설정
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -33,6 +35,72 @@ async def on_ready():
 async def 안녕(ctx):
     await ctx.send("안녕하세요! 봇이 정상적으로 작동 중입니다.")
 
+# 3. 다나와 최저가 검색 명령어
+@bot.command()
+async def 다나와(ctx, *, keyword: str = None):
+    if not keyword:
+        await ctx.send("검색어를 입력해 주세요! 예시: `!다나와 RTX 4060`")
+        return
+
+    await ctx.send(f"🔍 **'{keyword}'** 다나와 검색 중...")
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
+    }
+    
+    encoded_keyword = urllib.parse.quote(keyword)
+    url = f"https://search.danawa.com/dsearch.php?query={encoded_keyword}"
+
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        items = soup.select('.product_list > .prod_item')
+        results = []
+
+        for item in items:
+            if 'prod_ad_item' in item.get('class', []):
+                continue
+
+            name_elem = item.select_one('.prod_name a')
+            price_elem = item.select_one('.price_sect strong')
+
+            if name_elem and price_elem:
+                name = name_elem.text.strip()
+                price = price_elem.text.strip() + "원"
+                link = name_elem.get('href', url)
+                
+                if link.startswith('//'):
+                    link = 'https:' + link
+
+                results.append((name, price, link))
+                if len(results) >= 3:
+                    break
+
+        if not results:
+            await ctx.send(f"❌ **'{keyword}'**에 대한 검색 결과를 찾을 수 없습니다.")
+            return
+
+        embed = discord.Embed(
+            title=f"🛒 다나와 검색 결과: {keyword}",
+            color=discord.Color.blue(),
+            url=url
+        )
+
+        for idx, (name, price, link) in enumerate(results, 1):
+            embed.add_field(
+                name=f"{idx}. {name[:40]}...", 
+                value=f"💰 **최저가**: {price}\n🔗 [상품 링크 바로가기]({link})", 
+                inline=False
+            )
+
+        embed.set_footer(text="Danawa Price Crawler")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(f"⚠️ 검색 도중 오류가 발생했습니다: {e}")
+
+# 봇 실행
 TOKEN = os.environ.get("DISCORD_TOKEN")
 if TOKEN:
     bot.run(TOKEN)
